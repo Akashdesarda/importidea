@@ -1,2 +1,2 @@
-# importidea
+# import idea
 This repository is use for maintaining and hosting 'import idea' blog website.
