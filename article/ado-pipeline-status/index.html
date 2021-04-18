@@ -423,23 +423,23 @@
 <div class="admonition note">
 <p>I believe to better understand any blog, understanding its original requirement is essential.</p>
 </div>
-<p>We use serval microservices in our application which is finally deployment using kubernetes. Each microservices has two CI pipeline:</p>
+<p>We use serval microservices in our application which is finally deployment using Kubernetes. Each microservices has two CI pipeline:</p>
 <ol>
 <li><strong>Base pipeline</strong>: Used to install all dependencies.</li>
-<li><strong>Build pipeline</strong>: Used to build service on top of <em>base pipeline</em>.</li>
+<li><strong>Build pipeline</strong>: Used to build service on top of the <em>base pipeline</em>.</li>
 </ol>
-<p>Now, the frequency to run <em>base pipeline</em> as compared to <em>build pipeline</em> is rare as dependencies changes very rarely. Both <em>base pipeline</em> and <em>build pipeline</em> produces docker images as end result which is finally push to our container registry. If pipelines fails then its respective docker image is not pushed.</p>
-<p>Initially, I used to manually check them every time. Its not that daunting as it sounds as there were few checks in place,</p>
+<p>Now, the frequency to run <em>base pipeline</em> as compared to <em>build pipeline</em> is rare as dependencies changes very rarely. Both <em>base pipeline</em> and <em>build pipeline</em> produces docker images as the end result which is finally pushed to our container registry. If the pipeline fails then its respective docker image is not pushed.</p>
+<p>Initially, I used to manually check them every time. It's not that daunting as it sounds as there were few checks in place,</p>
 <ol>
 <li>
-<p>Docker image in <em>build pipeline</em> is build on top docker image from <em>base pipeline</em>. So even if latest <em>base pipeline</em> fails, <em>build pipeline</em> will simply pulled an earlier successfully pushed image.</p>
+<p>Docker image in <em>build pipeline</em> is built on top docker image from <em>base pipeline</em>. So even if the latest <em>base pipeline</em> fails, the <em>build pipeline</em> will simply pull an earlier successfully pushed image.</p>
 </li>
 <li>
 <p>In some rare scenario where if both the pipeline is triggered at the same time then I have to manually pause the <em>build pipeline</em> till <em>base pipeline</em> is not succeeded. Now this is <strong>defeating the purpose of automation via CI pipeline</strong> 😭</p>
 </li>
 </ol>
-<p>As I mentioned earlier, <em>base pipeline</em> can pull docker image from repository no matter what is the status of <em>base pipeline</em>. This is done intentionally so that the CI pipeline will not break. But this also gave rise harmful design flaw. Ideally <em>build pipeline</em> must have all the latest packages and utilities installed. Smart people can definitely smell a trade-off here.</p>
-<p><em>So lets summarize into an checklist which can solve all this problems, ideally he </em><em>build pipeline</em><em> should check following checklist before staring its xecution:</em></p>
+<p>As I mentioned earlier, the base pipeline can pull docker image from the repository no matter what is the status of the base pipeline. This is done intentionally so that the CI pipeline will not break. But this also gave rise to a harmful design flaw. Ideally, the build pipeline must have all the latest packages and utilities installed. Smart people can definitely smell a trade-off here.</p>
+<p><em>So let's summarize into a checklist that can solve all these problems, ideally, the </em><em>build pipeline</em><em> should check the following checklist before starting its execution:</em></p>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Is the <em>base pipeline</em> running?  </li>
 <li>If running then wait and check after some interval using pooling mechanism</li>
@@ -450,16 +450,16 @@
 </ul>
 <hr />
 <h2 id="2-the-solution">2. The Solution</h2>
-<p>After going through the problem now its time to go through the solution.</p>
+<p>After going through the problem now it's time to go through the solution.</p>
 <h3 id="21-personal-access-token-pat">2.1 Personal Access Token (PAT)</h3>
-<p>We'll need PAT to establish connection with Azure DevOps and create its client. Follow this <a href="https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&amp;tabs=preview-page" title="Create a PAT">official guide</a> from Microsoft to create one. Make sure the PAT must have <strong>Read access</strong> for <strong>Build</strong> and <strong>Release</strong>. You can enable it from <strong>Edit &gt; Scopes</strong>.</p>
+<p>We'll need PAT to a establish connection with Azure DevOps and create its client. Follow this <a href="https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&amp;tabs=preview-page" title="Create a PAT">official guide</a> from Microsoft to create one. Make sure the PAT must have <strong>Read access</strong> for <strong>Build</strong> and <strong>Release</strong>. You can enable it from <strong>Edit &gt; Scopes</strong>.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Make sure not to loose the PAT token key. As it is not stored anywhere an Azure devops and can be only copied once at the time of creation.</p>
+<p>Make sure not to lose the PAT token key. As it is not stored anywhere in Azure devops and can be only copied once at the time of creation.</p>
 </div>
 <h3 id="22-creating-azure-devops-client">2.2 Creating Azure devops client</h3>
 <p>Azure DevOps provide extensive support through its <a href="https://docs.microsoft.com/en-us/rest/api/azure/devops/?view=azure-devops-rest-6.1" title="Azure DevOps REST api">REST api</a> 🚀. We can directly use REST api over HTTPS operation, but we can't build custom logic around it. So instead I am using <a href="https://github.com/microsoft/azure-devops-python-api">Azure DevOps Python API</a></p>
-<p>Lets see how to create the client</p>
+<p>Let's see how to create the client</p>
 <table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span>1
 2
 3
@@ -499,7 +499,7 @@
 <p>I struggled a bit for searching 'definitionId'. But there's a neat trick, just goto your pipeline's build page (where it shows all history of runs) and in the url you will find it.</p>
 </div>
 <h3 id="24-pooling-mechanism">2.4 Pooling Mechanism</h3>
-<p>This is the most critical part as it will ensure to tick all element from the above checklist. The script first checks result of last build and if its not in failed state then continue to check status for completion. This step is repeated for every 10 seconds with timeout of 30m</p>
+<p>This is the most critical part as it will ensure to tick all element from the above checklist. The script first checks the result of the last build and if it's not in a failed state then continue to check the status for completion. This step is repeated every 10 seconds with a timeout of 30m</p>
 <table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span> 1
  2
  3
