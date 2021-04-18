@@ -1,4 +1,5 @@
 site_name: import idea
+site_author: Akash Desarda
 theme:
   name: "material"
   palette:
@@ -6,10 +7,11 @@ theme:
     primary: deep orange
     accent: green
     features:
-    # - tabs: true
     - navigation.instant
     - navigation.tabs
     - navigation.sections
+    - navigation.top
+    - toc.integrate
 extra:
   social:
     - icon: fontawesome/solid/paper-plane
@@ -24,16 +26,29 @@ extra:
 plugins:
   - search
   - tags:
-      tags_folder: docs
+      # tags_folder: docs
 markdown_extensions:
   - meta
+  - attr_list
+  - admonition
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.highlight:
+      linenums: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.smartsymbols
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+
 nav:
   - Home: index.md
-  - Programming:
+  - Articles:
     - Programming: programming.md
-  - Tools:
     - Tools: tools.md
-  - Miscellaneous:
     - Miscellaneous: misc.md
-  - Category: tags.md
+    - Category: 
+      - Tags: tags.md
+      - Author: author_tags.md
   - About: about.md

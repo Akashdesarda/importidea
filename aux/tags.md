@@ -6,15 +6,22 @@ title: Tags
 
 
 
-## <span class="tag">testing</span>
+## <span class="tag">Azure DevOps</span>
 
-  * [Welcome](python/page.md)
+  * [Retrieve Azure Devops Pipeline current/older metadata](article/ado-pipeline-status.md)
 
  
 
 
-## <span class="tag">unimportant</span>
+## <span class="tag">CI/CD</span>
 
-  * [Welcome](python/page.md)
+  * [Retrieve Azure Devops Pipeline current/older metadata](article/ado-pipeline-status.md)
+
+ 
+
+
+## <span class="tag">Tools</span>
+
+  * [Retrieve Azure Devops Pipeline current/older metadata](article/ado-pipeline-status.md)
 
  

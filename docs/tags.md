@@ -20,22 +20,7 @@ title: Tags
  
 
 
-## <span class="tag">docker</span>
-
-  * [Some page2](article/page1.md)
-
- 
-
-
-## <span class="tag">python</span>
-
-  * [Some page2](article/page1.md)
-
- 
-
-
 ## <span class="tag">tool</span>
 
   * [Retrieve Azure Devops Pipeline current/older metadata](article/ado-pipeline-status.md)
 
- 
