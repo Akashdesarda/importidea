@@ -21,22 +21,22 @@ tags:
 !!! note ""
     I believe to better understand any blog, understanding its original requirement is essential.
 
-We use serval microservices in our application which is finally deployment using kubernetes. Each microservices has two CI pipeline:
+We use serval microservices in our application which is finally deployment using Kubernetes. Each microservices has two CI pipeline:
 
 1. **Base pipeline**: Used to install all dependencies.
-2. **Build pipeline**: Used to build service on top of *base pipeline*.
+2. **Build pipeline**: Used to build service on top of the *base pipeline*.
 
-Now, the frequency to run *base pipeline* as compared to *build pipeline* is rare as dependencies changes very rarely. Both *base pipeline* and *build pipeline* produces docker images as end result which is finally push to our container registry. If pipelines fails then its respective docker image is not pushed.
+Now, the frequency to run *base pipeline* as compared to *build pipeline* is rare as dependencies changes very rarely. Both *base pipeline* and *build pipeline* produces docker images as the end result which is finally pushed to our container registry. If the pipeline fails then its respective docker image is not pushed.
 
-Initially, I used to manually check them every time. Its not that daunting as it sounds as there were few checks in place,
+Initially, I used to manually check them every time. It's not that daunting as it sounds as there were few checks in place,
 
-1. Docker image in *build pipeline* is build on top docker image from *base pipeline*. So even if latest *base pipeline* fails, *build pipeline* will simply pulled an earlier successfully pushed image.
+1. Docker image in *build pipeline* is built on top docker image from *base pipeline*. So even if the latest *base pipeline* fails, the *build pipeline* will simply pull an earlier successfully pushed image.
 
 2. In some rare scenario where if both the pipeline is triggered at the same time then I have to manually pause the *build pipeline* till *base pipeline* is not succeeded. Now this is **defeating the purpose of automation via CI pipeline** 😭
 
-As I mentioned earlier, *base pipeline* can pull docker image from repository no matter what is the status of *base pipeline*. This is done intentionally so that the CI pipeline will not break. But this also gave rise harmful design flaw. Ideally *build pipeline* must have all the latest packages and utilities installed. Smart people can definitely smell a trade-off here.
+As I mentioned earlier, the base pipeline can pull docker image from the repository no matter what is the status of the base pipeline. This is done intentionally so that the CI pipeline will not break. But this also gave rise to a harmful design flaw. Ideally, the build pipeline must have all the latest packages and utilities installed. Smart people can definitely smell a trade-off here.
 
-*So lets summarize into an checklist which can solve all this problems, ideally he **build pipeline** should check following checklist before staring its xecution:*
+*So let's summarize into a checklist that can solve all these problems, ideally, the **build pipeline** should check the following checklist before starting its execution:*
 
 - [X] Is the *base pipeline* running?  
   - If running then wait and check after some interval using pooling mechanism
@@ -49,20 +49,20 @@ As I mentioned earlier, *base pipeline* can pull docker image from repository no
 
 ## 2. The Solution
 
-After going through the problem now its time to go through the solution.
+After going through the problem now it's time to go through the solution.
 
 ### 2.1 Personal Access Token (PAT)
 
-We'll need PAT to establish connection with Azure DevOps and create its client. Follow this [official guide](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=preview-page "Create a PAT") from Microsoft to create one. Make sure the PAT must have **Read access** for **Build** and **Release**. You can enable it from **Edit > Scopes**.
+We'll need PAT to a establish connection with Azure DevOps and create its client. Follow this [official guide](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=preview-page "Create a PAT") from Microsoft to create one. Make sure the PAT must have **Read access** for **Build** and **Release**. You can enable it from **Edit > Scopes**.
 
 !!! warning
-    Make sure not to loose the PAT token key. As it is not stored anywhere an Azure devops and can be only copied once at the time of creation.
+    Make sure not to lose the PAT token key. As it is not stored anywhere in Azure devops and can be only copied once at the time of creation.
 
 ### 2.2 Creating Azure devops client
 
 Azure DevOps provide extensive support through its [REST api](https://docs.microsoft.com/en-us/rest/api/azure/devops/?view=azure-devops-rest-6.1 "Azure DevOps REST api") 🚀. We can directly use REST api over HTTPS operation, but we can't build custom logic around it. So instead I am using [Azure DevOps Python API](https://github.com/microsoft/azure-devops-python-api)
 
-Lets see how to create the client
+Let's see how to create the client
 
 ```python
 from azure.devops.connection import Connection
@@ -94,7 +94,7 @@ Here I will retrieve specific builds of in focus *base pipeline* with the help o
 
 ### 2.4 Pooling Mechanism
 
-This is the most critical part as it will ensure to tick all element from the above checklist. The script first checks result of last build and if its not in failed state then continue to check status for completion. This step is repeated for every 10 seconds with timeout of 30m
+This is the most critical part as it will ensure to tick all element from the above checklist. The script first checks the result of the last build and if it's not in a failed state then continue to check the status for completion. This step is repeated every 10 seconds with a timeout of 30m
 
 ```python
 for step_time in list(range(10, 1810, 10)):
